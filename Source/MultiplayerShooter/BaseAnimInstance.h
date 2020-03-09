@@ -28,6 +28,9 @@ public:
 	float Direction;
 	//
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	float AxisTurn;
+	//
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	EMovementStates CurrentCharMovStates;
 	//
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")

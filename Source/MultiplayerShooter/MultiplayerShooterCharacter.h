@@ -63,6 +63,8 @@ protected:
 	 */
 	void TurnAtRate(float Rate);
 
+	void Turn(float Value);
+
 	/**
 	 * Called via input to turn look up/down at a given rate. 
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
@@ -81,6 +83,9 @@ protected:
 
 	UFUNCTION(Reliable, Server)
 	void MoveRightOnServer(float value);
+
+	UFUNCTION(Reliable, Server)
+	void AxisTurnOnServer(float value);
 
 protected:
 	// APawn interface
@@ -101,6 +106,9 @@ public:
 	//
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	float MoveFwdBwd;
+	//
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	float AxisTurn;
 	//
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	EMovementStates CharacterMovStates;

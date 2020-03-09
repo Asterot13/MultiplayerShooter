@@ -26,5 +26,6 @@ void UBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		Direction = OwningChar->MoveLeftRight;
 		CurrentCharMovStates = OwningChar->CharacterMovStates;
 		isMoving = OwningChar->isMoving;
+		AxisTurn = OwningChar->AxisTurn;
 	}
 }

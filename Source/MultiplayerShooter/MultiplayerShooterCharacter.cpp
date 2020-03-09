@@ -9,6 +9,7 @@
 #include "GameFramework/Controller.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Engine/Engine.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AMultiplayerShooterCharacter
@@ -77,7 +78,7 @@ void AMultiplayerShooterCharacter::SetupPlayerInputComponent(class UInputCompone
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
 	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("Turn", this, &AMultiplayerShooterCharacter::Turn);
 	PlayerInputComponent->BindAxis("TurnRate", this, &AMultiplayerShooterCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AMultiplayerShooterCharacter::LookUpAtRate);
@@ -98,6 +99,7 @@ void AMultiplayerShooterCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeP
 	DOREPLIFETIME(AMultiplayerShooterCharacter, MoveFwdBwd);
 	DOREPLIFETIME(AMultiplayerShooterCharacter, CharacterMovStates);
 	DOREPLIFETIME(AMultiplayerShooterCharacter, isMoving);
+	DOREPLIFETIME(AMultiplayerShooterCharacter, AxisTurn);
 }
 
 void AMultiplayerShooterCharacter::Tick(float DeltaSeconds)
@@ -147,10 +149,21 @@ void AMultiplayerShooterCharacter::MoveRightOnServer_Implementation(float value)
 	MoveLeftRight = value;
 }
 
+void AMultiplayerShooterCharacter::AxisTurnOnServer_Implementation(float value)
+{
+	AxisTurn = value;
+}
+
 void AMultiplayerShooterCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AMultiplayerShooterCharacter::Turn(float Value)
+{
+	AxisTurnOnServer(Value);
+	AddControllerYawInput(Value);
 }
 
 void AMultiplayerShooterCharacter::LookUpAtRate(float Rate)
