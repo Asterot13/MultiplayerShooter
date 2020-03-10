@@ -72,6 +72,8 @@ void AMultiplayerShooterCharacter::SetupPlayerInputComponent(class UInputCompone
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AMultiplayerShooterCharacter::Interact);
+
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMultiplayerShooterCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AMultiplayerShooterCharacter::MoveRight);
 
@@ -154,6 +156,11 @@ void AMultiplayerShooterCharacter::AxisTurnOnServer_Implementation(float value)
 	AxisTurn = value;
 }
 
+void AMultiplayerShooterCharacter::ServerDestroyPickup_Implementation(AActor* PickupToBeDestroyed)
+{
+	PickupToBeDestroyed->Destroy();
+}
+
 void AMultiplayerShooterCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
@@ -162,7 +169,10 @@ void AMultiplayerShooterCharacter::TurnAtRate(float Rate)
 
 void AMultiplayerShooterCharacter::Turn(float Value)
 {
-	AxisTurnOnServer(Value);
+	if (AxisTurn != Value)
+	{
+		AxisTurnOnServer(Value);
+	}
 	AddControllerYawInput(Value);
 }
 
@@ -180,7 +190,10 @@ void AMultiplayerShooterCharacter::MoveForward(float Value)
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		MoveForwardOnServer(Value);
+		if (MoveFwdBwd != Value)
+		{
+			MoveForwardOnServer(Value);
+		}
 
 		// get forward vector
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
@@ -188,7 +201,10 @@ void AMultiplayerShooterCharacter::MoveForward(float Value)
 	}
 	else
 	{
-		MoveForwardOnServer(Value);
+		if (MoveFwdBwd != Value)
+		{
+			MoveForwardOnServer(Value);
+		}
 	}
 }
 
@@ -200,7 +216,10 @@ void AMultiplayerShooterCharacter::MoveRight(float Value)
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 	
-		MoveRightOnServer(Value);
+		if (MoveLeftRight != Value)
+		{
+			MoveRightOnServer(Value);
+		}
 
 		// get right vector 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
@@ -209,6 +228,34 @@ void AMultiplayerShooterCharacter::MoveRight(float Value)
 	}
 	else 
 	{
-		MoveRightOnServer(Value);
+		if (MoveLeftRight != Value)
+		{
+			MoveRightOnServer(Value);
+		}
+	}
+}
+
+void AMultiplayerShooterCharacter::Interact()
+{
+	TArray<AActor*> OverlapedActors;
+	GetOverlappingActors(OverlapedActors, TSubclassOf<AWeaponPickupMaster>());
+
+	for (AActor* weapon : OverlapedActors)
+	{
+		AWeaponPickupMaster* WeaponPickup = Cast<AWeaponPickupMaster>(weapon);
+		AWeaponActualMaster* tempWeaponActual = WeaponPickup->WeaponActual.GetDefaultObject();
+		int32 Index = WeaponInventory.AddUnique(tempWeaponActual);
+		if (Index == -1 || Index == LastIndex)
+		{			
+			GEngine->AddOnScreenDebugMessage(0, 2.0f, FColor::Cyan, TEXT("Did not added!"));
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(0, 2.0f, FColor::Cyan, FString::FromInt(Index));
+			LastIndex = Index;
+			ServerDestroyPickup(weapon);
+		}
+		/*AWeaponActualMaster* temp = *WeaponInventory.GetData();
+		GEngine->AddOnScreenDebugMessage(0, 2.0f, FColor::Cyan, temp->GetName());*/
 	}
 }

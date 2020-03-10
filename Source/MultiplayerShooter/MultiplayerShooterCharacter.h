@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "WeaponPickupMaster.h"
 #include "MultiplayerShooterCharacter.generated.h"
 
 UENUM(BlueprintType)
@@ -57,6 +58,9 @@ protected:
 	/** Called for side to side input */
 	void MoveRight(float Value);
 
+	/** Called for interact with objects */
+	void Interact();
+
 	/** 
 	 * Called via input to turn at a given rate. 
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
@@ -77,7 +81,7 @@ protected:
 	/** Handler for when a touch input stops. */
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
-	/** Animation replication **/
+	/** Network and Animation replication **/
 	UFUNCTION(Reliable, Server)
 	void MoveForwardOnServer(float value);
 
@@ -86,6 +90,9 @@ protected:
 
 	UFUNCTION(Reliable, Server)
 	void AxisTurnOnServer(float value);
+
+	UFUNCTION(Reliable, Server)
+	void ServerDestroyPickup(AActor* PickupToBeDestroyed);
 
 protected:
 	// APawn interface
@@ -115,6 +122,14 @@ public:
 	//
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Animation")
 	bool isMoving;
+
+	/** Weapon properties **/
+public:
+	//
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	TArray<class AWeaponActualMaster*> WeaponInventory;
+	//
+	int32 LastIndex = -1;
 
 };
 
