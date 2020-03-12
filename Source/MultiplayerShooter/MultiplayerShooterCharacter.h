@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "WeaponPickupMaster.h"
+#include "Components/ActorComponent.h"
 #include "MultiplayerShooterCharacter.generated.h"
 
 UENUM(BlueprintType)
@@ -94,6 +95,9 @@ protected:
 	UFUNCTION(Reliable, Server)
 	void ServerDestroyPickup(AActor* PickupToBeDestroyed);
 
+	UFUNCTION(Reliable, Server)
+	void ServerSpawnWeapon(TSubclassOf<AWeaponActualMaster> NewWeapon);
+
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -127,7 +131,10 @@ public:
 public:
 	//
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	TArray<class AWeaponActualMaster*> WeaponInventory;
+	TArray<TSubclassOf<AWeaponActualMaster>> WeaponInventory;
+	//
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	AWeaponActualMaster* CurrentWeapon;
 	//
 	int32 LastIndex = -1;
 

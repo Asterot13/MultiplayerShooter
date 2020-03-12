@@ -14,6 +14,7 @@ AWeaponActualMaster::AWeaponActualMaster()
 	RootComponent = SkeletalMesh;
 
 	bReplicates = true;
+	SetRemoteRoleForBackwardsCompat(ROLE_SimulatedProxy);
 }
 
 // Called when the game starts or when spawned

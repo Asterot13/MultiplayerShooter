@@ -5,8 +5,13 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/PlayerController.h"
+#include "Runtime/Engine/Classes/Components/ActorComponent.h"
+#include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Engine/Engine.h"
@@ -57,6 +62,8 @@ AMultiplayerShooterCharacter::AMultiplayerShooterCharacter(const FObjectInitiali
 
 	GetMovementComponent()->SetIsReplicated(true);
 	GetCharacterMovement()->SetIsReplicated(true);
+
+	CurrentWeapon = nullptr;
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -161,6 +168,18 @@ void AMultiplayerShooterCharacter::ServerDestroyPickup_Implementation(AActor* Pi
 	PickupToBeDestroyed->Destroy();
 }
 
+void AMultiplayerShooterCharacter::ServerSpawnWeapon_Implementation(TSubclassOf<AWeaponActualMaster> NewWeapon)
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->Destroy();
+	}
+
+	CurrentWeapon = GetWorld()->SpawnActor<AWeaponActualMaster>(NewWeapon, GetMesh()->GetSocketLocation(FName("weaponSocket")), GetMesh()->GetSocketRotation(FName("weaponSocket")));
+	FAttachmentTransformRules AttacmentRules = FAttachmentTransformRules::SnapToTargetIncludingScale;
+	CurrentWeapon->AttachToComponent(GetMesh(), AttacmentRules, FName("weaponSocket"));
+}
+
 void AMultiplayerShooterCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
@@ -244,7 +263,7 @@ void AMultiplayerShooterCharacter::Interact()
 	{
 		AWeaponPickupMaster* WeaponPickup = Cast<AWeaponPickupMaster>(weapon);
 		AWeaponActualMaster* tempWeaponActual = WeaponPickup->WeaponActual.GetDefaultObject();
-		int32 Index = WeaponInventory.AddUnique(tempWeaponActual);
+		int32 Index = WeaponInventory.AddUnique(tempWeaponActual->GetClass());
 		if (Index == -1 || Index == LastIndex)
 		{			
 			GEngine->AddOnScreenDebugMessage(0, 2.0f, FColor::Cyan, TEXT("Did not added!"));
@@ -255,7 +274,11 @@ void AMultiplayerShooterCharacter::Interact()
 			LastIndex = Index;
 			ServerDestroyPickup(weapon);
 		}
-		/*AWeaponActualMaster* temp = *WeaponInventory.GetData();
-		GEngine->AddOnScreenDebugMessage(0, 2.0f, FColor::Cyan, temp->GetName());*/
+	}
+
+	if (WeaponInventory.Num() != 0)
+	{
+		TSubclassOf<AWeaponActualMaster> WeaponClass = WeaponInventory.Last();
+		ServerSpawnWeapon(WeaponClass);
 	}
 }
